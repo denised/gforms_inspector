@@ -106,6 +106,34 @@ function gfi_form_inspector() {
             <tr><td class='literal'>[cC]ss</td><td>try this one!</td></tr></table>
     </div>
 </div>
+<div class="fi-section" style="display: block">
+ <h3>Confirmation Types</h3>
+ <p></p>
+ <p>
+<table><?php
+    foreach( GFAPI::get_forms() as $f) {
+        echo "<tr><td>{$f['title']}</td><td>";
+        $confirmations = rgar($f, 'confirmations');
+        $confs = [];
+        foreach($confirmations as $conf) {
+            $type = $conf['type'];
+            if ( $type == "message" ) {
+                $confs[] = "Message: {$conf['message']}";
+            }
+            elseif ( $type == "page" ) {
+                $pid = $conf['page'];
+                $title = ($pid ? get_the_title($pid) : "");
+                $confs[] = "Page redirect: ($pid) $title";
+            }
+            elseif ( $type == "redirect") {
+                $confs[] = "URL redirect: {$conf['url']}";
+            }
+        }
+        $confstring = implode("<br>", $confs);
+        echo "$confstring</td></tr>";
+    }
+?></table></p>
+</div>
 <style>
     .fi-section {
         width: 90%;
@@ -127,6 +155,12 @@ function gfi_form_inspector() {
         font-family: monospace;
         padding: 0 1em;
     }
+    .fi-section table, .fi-section td {
+        border: 1px solid;
+        border-collapse: collapse;
+        padding: 0.25em 0.5em
+    }
+
 </style> 
 <script>
     jQuery(document).ready(
