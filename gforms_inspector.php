@@ -116,17 +116,20 @@ function gfi_form_inspector() {
         $confirmations = rgar($f, 'confirmations');
         $confs = [];
         foreach($confirmations as $conf) {
-            $type = $conf['type'];
+            $type = rgar($conf, 'type');
             if ( $type == "message" ) {
                 $confs[] = "Message: {$conf['message']}";
             }
             elseif ( $type == "page" ) {
-                $pid = $conf['page'];
-                $title = ($pid ? get_the_title($pid) : "");
+                $pid = rgar($conf, 'pageId');
+                $title = get_the_title($pid);
                 $confs[] = "Page redirect: ($pid) $title";
             }
             elseif ( $type == "redirect") {
                 $confs[] = "URL redirect: {$conf['url']}";
+            }
+            else {
+                $confs[] = "Unknown type $type";
             }
         }
         $confstring = implode("<br>", $confs);
