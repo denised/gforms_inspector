@@ -33,6 +33,13 @@ function gfi_register_form_inspector_page() {
 		'gfi_form_inspector' );
 }
 
+function sorted_forms() {
+    $forms = GFAPI::get_forms();
+    uasort($forms, function($a, $b) {
+        return ($a['title'] > $b['title']);
+    });
+    return $forms;
+}
 
 function gfi_form_inspector() { 
     
@@ -46,7 +53,7 @@ function gfi_form_inspector() {
     <div class="fi-section">
     <div id="form-list" class="fi-box" style="width: 20em; flex: none;">
 <?php
-    foreach( GFAPI::get_forms() as $f) {
+    foreach( sorted_forms() as $f) {
         $id = "form_{$f['id']}";
         echo "<input type='radio' id='$id' name='form_list'>";
         echo "<label for='$id'>{$f['title']}</label><br>";
@@ -89,7 +96,7 @@ function gfi_form_inspector() {
         <div class='fi-list'>
             <input type='checkbox' id='fi-search-all'><br>
             <?php
-            foreach( GFAPI::get_forms() as $f) {
+            foreach( sorted_forms() as $f) {
                 $id = "fi-search_{$f['id']}";
                 echo "<input type='checkbox' id='$id'>";
                 echo "<label for='$id'>{$f['title']}</label><br>";
@@ -111,7 +118,7 @@ function gfi_form_inspector() {
  <p></p>
  <p>
 <table><?php
-    foreach( GFAPI::get_forms() as $f) {
+    foreach( sorted_forms() as $f) {
         echo "<tr><td>{$f['title']}</td><td>";
         $confirmations = rgar($f, 'confirmations');
         $confs = [];
@@ -313,11 +320,13 @@ function form_inspector_ajax_search_forms() {
                 foreach( $form as $k=>$v ) {
                     $show = (!$search_regex || preg_match($search_regex, $k));
                     if ($show) {
-                        $formcol = ($first ? $form['title'] : "");
+                        $formcol = ($first ? esc_html($form['title']) : "");
                         if (is_array($v)) {
                             $cnt = count($v);
                             $v = "Array($cnt)";
                         }
+                        $k = esc_html($k);
+                        $v = esc_html($v);
                         echo "<tr><td>$formcol</td><td>$k</td><td>$v</td></tr>";
                         $first = false;
                     }
@@ -335,19 +344,23 @@ function form_inspector_ajax_search_forms() {
                         foreach( $field as $k=>$v ) {
                             $show = (!$search_regex || preg_match($search_regex, $k));
                             if ($show) {
-                                $formcol = ($first ? $form['title'] : "");
+                                $formcol = ($first ? esc_html($form['title']) : "");
                                 if (is_array($v)) {
                                     $cnt = count($v);
                                     $v = "Array($cnt)";
                                 }
-                                echo "<tr><td>$formcol</td><td>{$field['label']}<td>$k</td><td>$v</td></tr>";
+                                $label = esc_html($field['label']);
+                                $k = esc_html($k);
+                                $v = esc_html($v);
+                                echo "<tr><td>$formcol</td><td>$label<td>$k</td><td>$v</td></tr>";
                                 $first = false;
                             }                            
                         }
                     }
                 }
                 if ($first) { // we never output anything, let's tell the user...
-                    echo "<tr><td>{$form['title']}</td><td colspan='3'>Either no fields matched or no attributes matched</td></tr>";
+                    $title = esc_html($form['title']);
+                    echo "<tr><td>$title</td><td colspan='3'>Either no fields matched or no attributes matched</td></tr>";
                 }
             }
         }
