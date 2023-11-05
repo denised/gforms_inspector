@@ -4,7 +4,7 @@
  * Plugin URI:   https://github.com/denised/gforms_inspector
  * Description:  Admin tool lets you search form and field settings across multiple Gravity Forms at once.
  * Author:       Denise Draper
- * Version:      0.8
+ * Version:      0.9
  * 
  * This is a very simple plugin you can drop into your plugin directory, or just load the php with
  * your code. 
@@ -36,7 +36,7 @@ function gfi_register_form_inspector_page() {
 function sorted_forms() {
     $forms = GFAPI::get_forms();
     uasort($forms, function($a, $b) {
-        return ($a['title'] > $b['title']);
+        return strcmp($a['title'],$b['title']);
     });
     return $forms;
 }
@@ -56,7 +56,7 @@ function gfi_form_inspector() {
     foreach( sorted_forms() as $f) {
         $id = "form_{$f['id']}";
         echo "<input type='radio' id='$id' name='form_list'>";
-        echo "<label for='$id'>{$f['title']}</label><br>";
+        echo "<label for='$id'>" . esc_html($f['title']) . "</label><br>";
     }
 ?>
     </div>
@@ -99,7 +99,7 @@ function gfi_form_inspector() {
             foreach( sorted_forms() as $f) {
                 $id = "fi-search_{$f['id']}";
                 echo "<input type='checkbox' id='$id'>";
-                echo "<label for='$id'>{$f['title']}</label><br>";
+                echo "<label for='$id'>" . esc_html($f['title']) . "</label><br>";
             }
         ?>          
         </div>
@@ -119,7 +119,7 @@ function gfi_form_inspector() {
  <p>
 <table><?php
     foreach( sorted_forms() as $f) {
-        echo "<tr><td>{$f['title']}</td><td>";
+        echo "<tr><td>" . esc_html($f['title']) . "</td><td>";
         $confirmations = rgar($f, 'confirmations');
         $confs = [];
         foreach($confirmations as $conf) {
@@ -129,7 +129,7 @@ function gfi_form_inspector() {
             }
             elseif ( $type == "page" ) {
                 $pid = rgar($conf, 'pageId');
-                $title = get_the_title($pid);
+                $title = esc_html(get_the_title($pid));
                 $confs[] = "Page redirect: ($pid) $title";
             }
             elseif ( $type == "redirect") {
@@ -268,7 +268,7 @@ function form_inspector_ajax_fetch_form() {
     $formid = intval($_GET['form_number']);
     $form = GFAPI::get_form($formid);
     if ($form) {
-        print_r($form);
+        echo esc_html(print_r($form, true));
     }
     else {
         echo "not found";
@@ -315,12 +315,13 @@ function form_inspector_ajax_search_forms() {
             $form = GFAPI::get_form($fid);
             if ( ! $form ) continue;
             
+            $form_title = esc_html($form['title']);
             if ($search_type == 'form' ) { // search form attributes
                 $first = true;
                 foreach( $form as $k=>$v ) {
                     $show = (!$search_regex || preg_match($search_regex, $k));
                     if ($show) {
-                        $formcol = ($first ? esc_html($form['title']) : "");
+                        $formcol = ($first ? $form_title : "");
                         if (is_array($v)) {
                             $cnt = count($v);
                             $v = "Array($cnt)";
@@ -332,7 +333,7 @@ function form_inspector_ajax_search_forms() {
                     }
                 }
                 if ($first) { // we never output anything, let's tell the user...
-                    echo "<tr><td>{$form['title']}</td><td rowspan='2'>No attributes matched.</td></tr>";
+                    echo "<tr><td>{$form_title}</td><td rowspan='2'>No attributes matched.</td></tr>";
                 }
             }
             else { // search field attributes
@@ -344,7 +345,7 @@ function form_inspector_ajax_search_forms() {
                         foreach( $field as $k=>$v ) {
                             $show = (!$search_regex || preg_match($search_regex, $k));
                             if ($show) {
-                                $formcol = ($first ? esc_html($form['title']) : "");
+                                $formcol = ($first ? $form_title : "");
                                 if (is_array($v)) {
                                     $cnt = count($v);
                                     $v = "Array($cnt)";
@@ -359,8 +360,7 @@ function form_inspector_ajax_search_forms() {
                     }
                 }
                 if ($first) { // we never output anything, let's tell the user...
-                    $title = esc_html($form['title']);
-                    echo "<tr><td>$title</td><td colspan='3'>Either no fields matched or no attributes matched</td></tr>";
+                    echo "<tr><td>$form_title</td><td colspan='3'>Either no fields matched or no attributes matched</td></tr>";
                 }
             }
         }
